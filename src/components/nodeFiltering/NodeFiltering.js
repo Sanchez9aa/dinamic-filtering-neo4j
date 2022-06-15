@@ -1,17 +1,28 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect } from 'react'
-import { DataSet } from "vis-data"
+import cloneDeep from "lodash/cloneDeep"
 
 import { useVisContext } from "../../contexts/VisContext/VisContext";
 
 export const NodeFiltering = () => {
 
-  const { vis, setVisToRender } = useVisContext();
+  const { vis } = useVisContext();
 
-  const [group, setGroup] = useState();
-  const [checking, setChecking] = useState(false);
-
+  const [groups, setGroups] = useState();
+  const [queryHistorial, setQueryHistorial] = useState([]);
+  const [cloneVis, setCloneVis] = useState(null);
+  
   useEffect(() => {
-    if (vis["_nodes"]) {
+    if(vis){
+      //we push query into queryHistorial
+      setQueryHistorial(queryHistorial => [...queryHistorial, vis["_query"]]);
+
+      //if query is not the same that the last query, we clone vis and set it to cloneVis
+      if(vis["_query"] !== queryHistorial[queryHistorial.length + 1]){
+        const visGraph = cloneDeep(vis);
+        setCloneVis(visGraph);
+      }
+      
       const nodes = Object.values(vis["_nodes"])
       const group = nodes.map(node => {
         return node.group
@@ -20,68 +31,45 @@ export const NodeFiltering = () => {
       const uniqueCheckValue = uniqueGroup.map(group => {
         return { value: group, active: true }
       })
-      setGroup(uniqueCheckValue)
+      setGroups(uniqueCheckValue)
+      console.log(uniqueCheckValue)
     }
   }, [vis])
 
   useEffect(() => {
-    if (vis["_nodes"] && group && checking) {
-      const nodes = Object.values(vis["_nodes"])
-      //We filter nodes that have group active
-      const filteredNodes = nodes.filter(node => {
-        return group.find(group => group.value === node.group && group.active)
+    if (vis && groups) {
+      //retrieve a filtered subset of the nodes that are in the object uniqueCheckValue and checked is true
+      const filteredNodes = cloneVis.nodes.get({
+        filter: (node) => {
+          return groups.find(group => {
+            return group.value === node.group && group.active
+          })
+        }
       })
-     //We filter edges that has the same id of nodes
-      const edges = Object.values(vis["_edges"])
-      const filteredEdges = edges.filter(edge => {
-        return filteredNodes.find(node => node.id === edge.from) && filteredNodes.find(node => node.id === edge.to)
-      })
-    
-      //Set nodes from array to a object with his id as key
-      const nodesObject = {}
-      filteredNodes.forEach(node => {
-        nodesObject[node.id] = node
-      })
-
-      //Set edges from array to a object with his id as key
-      const edgesObject = {}
-      filteredEdges.forEach(edge => {
-        edgesObject[edge.id] = edge
-      })
-
-      const data = {
-        nodes: new DataSet(filteredNodes),
-        edges: new DataSet(filteredEdges),
-        nodesObject: nodesObject,
-        edgesObject: edgesObject,
-      }
-  
-      setVisToRender(data)
-      setChecking(false)
+      vis.nodes.clear()
+      vis.nodes.update(filteredNodes)
     }
-  }, [group])
+  }, [groups])
 
   const handleCheckNode = (e) => {
     const { value, checked } = e.target;
-    const newGroup = group.map(group => {
+    const newGroup = groups.map(group => {
       if (group.value === value) {
         return { ...group, active: checked }
       }
       return group
     }
     )
-    setGroup(newGroup)
-    setChecking(true)
+    setGroups(newGroup)
   }
-
 
   return (
     <>
       <h2>Filter nodes</h2>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", flexDirection: "column" }}>
-        {group && group.map(node => {
+        {groups && groups.map(node => {
           return (
-            <div style={{display: "flex"}}>
+            <div style={{ display: "flex" }}>
               <input onChange={(e) => handleCheckNode(e)} type="checkbox" name="node" value={node.value} checked={node.active} />
               <label for={node.value}> {node.value}</label>
             </div>
