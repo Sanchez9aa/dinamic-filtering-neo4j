@@ -42,13 +42,13 @@ export const NodeFiltering = () => {
       filteredNodes.forEach(node => {
         nodesObject[node.id] = node
       })
-      console.log(filteredNodes)
 
       //Set edges from array to a object with his id as key
       const edgesObject = {}
       filteredEdges.forEach(edge => {
         edgesObject[edge.id] = edge
       })
+
       const data = {
         nodes: new DataSet(filteredNodes),
         edges: new DataSet(filteredEdges),
@@ -56,9 +56,7 @@ export const NodeFiltering = () => {
         edgesObject: edgesObject,
       }
   
-      /* vis["_network"] = new Network(document.getElementById('viz'), data) */
       setVisToRender(data)
-      /* setVisToRender(data) */
       setChecking(false)
     }
   }, [group])

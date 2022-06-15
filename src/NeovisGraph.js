@@ -29,7 +29,7 @@ const NeoGraph = () => {
     vis?.render();
 
     vis?.registerOnEvent("error", (event) => {
-      toast.error("Error obteniendo los datos, mira la consola para más detalles", {
+      toast.error("Error getting data, see console for details", {
         autoClose: 3000,
         isLoading: false
       });
@@ -39,7 +39,7 @@ const NeoGraph = () => {
     vis?.registerOnEvent("completed", () => {
       setVis(vis)
       if (Object.keys(vis["_nodes"]).length === 0) {
-        toast.info("No se encontraron resultados", {
+        toast.info("No results found", {
           autoClose: false,
           isLoading: false
         });
@@ -50,7 +50,7 @@ const NeoGraph = () => {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [visToRender]);
 
   return (
       <div
